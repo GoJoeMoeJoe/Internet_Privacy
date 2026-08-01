@@ -32,6 +32,11 @@ people-search sites.
 
 ## ⚠️ Privacy
 
-`removal-tracker.html` contains personal identifiers (name, city, birth year).
-**This repository must stay private.** If it is ever made public, remove or
-redact that file first.
+`removal-tracker.html` is a blank template — it contains **no** personal
+identifiers. Your data (checked brokers, profile URLs, notes) is saved only in
+your browser's `localStorage` and in any file you export.
+
+Personal identifiers live exclusively in the exported progress files under
+`Progress/` (e.g. `Progress/Garrick.json`), which are excluded from git by
+`.gitignore` and stay local. Keep those files out of any commit; the tracked
+files (`removal-tracker.html`, `README.md`, `LICENSE`) are safe to share.
