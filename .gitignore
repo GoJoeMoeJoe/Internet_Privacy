@@ -1,0 +1,5 @@
+# Personal progress files — contain names, locations, and profile URLs.
+# Keep these local; never commit or push them.
+Progress/
+*-progress.json
+broker-progress.json

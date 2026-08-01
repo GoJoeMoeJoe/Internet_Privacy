@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Broker Removal Tracker</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --ink:#1b1f24; --muted:#5b6570;
+    --line:#e4e8ee; --accent:#2f6df6; --accent-ink:#fff;
+    --done:#e8f6ee; --done-line:#bfe5cd; --done-ink:#1c7a44;
+    --t1:#fbe9e7; --t2:#eef3fb; --t3:#f3eefb; --t4:#fff7e6; --t5:#eef7f0;
+    --chip:#eef1f5; --hard:#c0392b; --med:#b8860b; --easy:#1c7a44;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1216; --card:#171b21; --ink:#e7ebf0; --muted:#9aa5b1;
+      --line:#262c34; --accent:#5b8bff; --accent-ink:#0b0d10;
+      --done:#12281c; --done-line:#1f4d31; --done-ink:#5fd28c;
+      --t1:#2a1614; --t2:#141c2b; --t3:#1e162b; --t4:#2a2310; --t5:#12241a;
+      --chip:#222831; --hard:#ff7a6b; --med:#e5b34a; --easy:#5fd28c;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:24px}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;margin-bottom:18px}
+  .idbar{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px}
+  .idbar b{color:var(--muted);font-weight:600}
+  .progwrap{display:flex;align-items:center;gap:14px;margin:6px 0 2px}
+  .bar{flex:1;height:12px;background:var(--chip);border-radius:99px;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+  .progtxt{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 4px}
+  input[type=search]{flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);
+    border-radius:8px;background:var(--card);color:var(--ink);font-size:14px}
+  button.mini{padding:7px 12px;border:1px solid var(--line);background:var(--card);
+    color:var(--ink);border-radius:8px;cursor:pointer;font-size:13px}
+  button.mini:hover{border-color:var(--accent)}
+  h2{font-size:17px;margin:26px 0 6px;display:flex;align-items:center;gap:10px}
+  .tier{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;letter-spacing:.02em}
+  .tg1{background:var(--t1)} .tg2{background:var(--t2)} .tg3{background:var(--t3)}
+  .tg4{background:var(--t4)} .tg5{background:var(--t5)}
+  .hint{color:var(--muted);font-size:13px;margin:0 0 10px}
+  table{width:100%;border-collapse:collapse;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:var(--chip)}
+  tr:last-child td{border-bottom:none}
+  tr.done{background:var(--done)}
+  tr.done .site b{color:var(--done-ink)}
+  .site b{font-size:15px} .site small{color:var(--muted);display:block}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .links a{display:inline-block;margin-right:12px;white-space:nowrap}
+  .diff{font-size:12px;font-weight:700}
+  .d-hard{color:var(--hard)} .d-med{color:var(--med)} .d-easy{color:var(--easy)}
+  td.chk{width:34px;text-align:center}
+  input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent)}
+  .recheck{font-size:12px;color:var(--muted)}
+  input[type=date]{border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:6px;padding:3px 5px;font-size:12px}
+  td.notes{min-width:200px}
+  textarea.profiles{width:100%;min-height:44px;resize:vertical;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);border-radius:6px;padding:5px 7px;font-size:12px;
+    font-family:inherit;line-height:1.4}
+  textarea.profiles:focus{outline:none;border-color:var(--accent)}
+  .steps{counter-reset:s}
+  .steps > li{margin:0 0 10px}
+  details{border:1px solid var(--line);border-radius:10px;padding:2px 14px;margin-bottom:10px;background:var(--card)}
+  details summary{cursor:pointer;font-weight:600;padding:10px 0}
+  .note{background:var(--t4);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:14px}
+  .hide{display:none !important}
+  footer{color:var(--muted);font-size:12px;margin-top:26px;text-align:center}
+  code{background:var(--chip);padding:1px 6px;border-radius:5px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Data Broker Removal Tracker</h1>
+  <p class="sub">Personal privacy cleanup checklist. Your progress saves automatically in this browser.</p>
+
+  <div class="card">
+    <div class="progwrap">
+      <div class="bar"><i id="fill"></i></div>
+      <span class="progtxt" id="ptxt">0 / 0</span>
+    </div>
+    <div class="controls">
+      <input type="search" id="filter" placeholder="Filter brokers by name…">
+      <button class="mini" id="showTodo">Show remaining only</button>
+      <button class="mini" id="showAll">Show all</button>
+      <button class="mini" id="reset">Reset progress</button>
+    </div>
+    <p class="hint" style="margin:8px 0 0">Difficulty: <span class="diff d-easy">Easy</span> = quick web form ·
+      <span class="diff d-med">Med</span> = email/phone confirm step ·
+      <span class="diff d-hard">Hard</span> = phone verify, mail, or ID required.</p>
+    <div class="controls" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+      <button class="mini" id="fsOpen">Open progress file…</button>
+      <button class="mini" id="fsSaveAs">Save to new file…</button>
+      <button class="mini hide" id="fsReconnect">🔌 Reconnect file</button>
+      <span class="hint" id="syncStatus" style="margin:0;flex:1;min-width:200px"></span>
+    </div>
+  </div>
+
+  <div id="tables"></div>
+
+  <h2>Step-by-step: the two highest-impact removals</h2>
+  <p class="hint">Start here. Spokeo and Whitepages are the most-trafficked and feed the widest exposure.</p>
+
+  <details open>
+    <summary>Spokeo — walkthrough (~5 min, Easy)</summary>
+    <ol class="steps">
+      <li>Go to <a href="https://www.spokeo.com" target="_blank" rel="noopener">spokeo.com</a> and search your name, filter to your state. Find the listing showing your city/address and rough age. Open it.</li>
+      <li>Copy the full profile URL from the address bar (looks like <code>spokeo.com/First-Last/...</code>).</li>
+      <li>Go to <a href="https://www.spokeo.com/optout" target="_blank" rel="noopener">spokeo.com/optout</a>.</li>
+      <li>Paste the profile URL, enter an email you control, complete the checkbox, submit.</li>
+      <li>Open the confirmation email from Spokeo and click the link. <b>Removal isn't final until you click that link.</b> Takes effect within a day or two.</li>
+    </ol>
+  </details>
+
+  <details>
+    <summary>Whitepages — walkthrough (~8 min, Hard: phone verification)</summary>
+    <ol class="steps">
+      <li>Go to <a href="https://www.whitepages.com" target="_blank" rel="noopener">whitepages.com</a>, search your name + city, state, and open your listing. Copy the listing URL.</li>
+      <li>Go to <a href="https://www.whitepages.com/suppression-requests" target="_blank" rel="noopener">whitepages.com/suppression-requests</a>.</li>
+      <li>Paste your listing URL and follow the prompts to identify the record.</li>
+      <li>Give a reason (e.g. "privacy") and provide a phone number — <b>Whitepages calls or texts a verification code.</b> Enter it to confirm.</li>
+      <li>Submitted requests process within ~24 hrs. This one is the most annoying but worth doing early.</li>
+    </ol>
+  </details>
+
+  <details>
+    <summary>The general pattern (applies to almost every broker below)</summary>
+    <ol class="steps">
+      <li><b>Find</b> your specific listing on the site (name + city + rough age to confirm it's you, not a namesake).</li>
+      <li><b>Copy the URL</b> of that listing.</li>
+      <li>Open the site's <b>opt-out / removal</b> page (links in the tables above).</li>
+      <li>Paste the URL, provide an email (use one address consistently so you can track confirmations).</li>
+      <li><b>Click the confirmation email</b> if one is sent — many removals silently fail if you skip this.</li>
+      <li>Note the date in the "recheck" box. Brokers re-scrape public records, so listings often <b>reappear in 3–12 months</b>.</li>
+    </ol>
+  </details>
+
+  <h2>Reduce re-population at the source</h2>
+  <div class="note">
+    The people-search sites above pull from a smaller layer of <b>data aggregators</b> (Tier 4). Opting out there slows how fast your info comes back everywhere else. Also worth doing once:
+    <ul style="margin:8px 0 0">
+      <li><a href="https://www.dmachoice.org" target="_blank" rel="noopener">DMAchoice</a> — reduces direct-mail marketing data.</li>
+      <li><a href="https://optout.lexisnexis.com" target="_blank" rel="noopener">LexisNexis opt-out</a> — major background-data source.</li>
+      <li>Utah county property & voter records are public and can't be removed — that's the original source most brokers scrape. Removals are therefore recurring, not permanent.</li>
+    </ul>
+  </div>
+
+  <h2>Don't want to do 50 forms by hand?</h2>
+  <div class="note">
+    Automated removal services do exactly this on repeat across 100+ brokers. Not affiliated — just noting the manual route is real work:
+    <b>Optery</b> (has a free scan that shows your actual confirmed exposure), <b>DeleteMe</b>, <b>Kanary</b>, <b>Privacy Bee</b>. Running Optery's free scan first is a good way to <i>see</i> which of the sites below actually list you.
+  </div>
+
+  <footer>Local file · progress stored in this browser only · nothing is sent anywhere.</footer>
+</div>
+
+<script>
+const DATA = [
+  {tier:1,name:"Spokeo",note:"Very high traffic",confirm:"https://www.spokeo.com",remove:"https://www.spokeo.com/optout",method:"Paste profile URL + email, click confirm email",diff:"med"},
+  {tier:1,name:"Whitepages",note:"Very high traffic",confirm:"https://www.whitepages.com",remove:"https://www.whitepages.com/suppression-requests",method:"Find listing, phone verification required",diff:"hard"},
+  {tier:1,name:"BeenVerified",note:"Covers PeopleLooker/PeopleSmart/NeighborWho/Ownerly",confirm:"https://www.beenverified.com",remove:"https://www.beenverified.com/app/optout/search",method:"Find record, confirm email",diff:"med"},
+  {tier:1,name:"Radaris",note:"Feeds Veripages & mirrors",confirm:"https://radaris.com",remove:"https://radaris.com/control/privacy",method:"Find listing, email confirm",diff:"med"},
+  {tier:1,name:"MyLife",note:"Posts a 'reputation score'",confirm:"https://www.mylife.com",remove:"mailto:privacy@mylife.com",method:"Email privacy@mylife.com (or call 888-704-1900) requesting deletion",diff:"hard"},
+  {tier:1,name:"Intelius",note:"PeopleConnect hub",confirm:"https://www.intelius.com",remove:"https://www.intelius.com/opt-out",method:"Suppression form; covers several siblings",diff:"med"},
+
+  {tier:2,name:"TruePeopleSearch",note:"Free, widely mirrored",confirm:"https://www.truepeoplesearch.com",remove:"https://www.truepeoplesearch.com/removal",method:"Email confirm",diff:"easy"},
+  {tier:2,name:"FastPeopleSearch",note:"Free",confirm:"https://www.fastpeoplesearch.com",remove:"https://www.fastpeoplesearch.com/removal",method:"Find record, email confirm",diff:"easy"},
+  {tier:2,name:"That'sThem",note:"Free",confirm:"https://thatsthem.com",remove:"https://thatsthem.com/optout",method:"Web form",diff:"easy"},
+  {tier:2,name:"Nuwber",note:"Free",confirm:"https://nuwber.com",remove:"https://nuwber.com/removal/link",method:"Find listing, email confirm",diff:"med"},
+  {tier:2,name:"USPhoneBook",note:"Phone-centric",confirm:"https://www.usphonebook.com",remove:"https://www.usphonebook.com/opt-out",method:"Web form",diff:"easy"},
+  {tier:2,name:"AdvancedBackgroundChecks",note:"Free",confirm:"https://www.advancedbackgroundchecks.com",remove:"https://www.advancedbackgroundchecks.com/removal",method:"Find record, email confirm",diff:"easy"},
+  {tier:2,name:"ClustrMaps",note:"Address-centric",confirm:"https://clustrmaps.com",remove:"https://clustrmaps.com/bl/opt-out",method:"Web form",diff:"easy"},
+  {tier:2,name:"PeopleFinders",note:"Free tier",confirm:"https://www.peoplefinders.com",remove:"https://www.peoplefinders.com/opt-out",method:"Find record, opt-out form",diff:"easy"},
+  {tier:2,name:"SearchPeopleFree",note:"Free",confirm:"https://www.searchpeoplefree.com",remove:"https://www.searchpeoplefree.com/opt-out",method:"Web form",diff:"easy"},
+  {tier:2,name:"CyberBackgroundChecks",note:"Free",confirm:"https://www.cyberbackgroundchecks.com",remove:"https://www.cyberbackgroundchecks.com/removal",method:"Find record, email confirm",diff:"easy"},
+  {tier:2,name:"SmartBackgroundChecks",note:"Free",confirm:"https://www.smartbackgroundchecks.com",remove:"https://www.smartbackgroundchecks.com/optout",method:"Web form",diff:"easy"},
+  {tier:2,name:"FamilyTreeNow",note:"Genealogy-style, exposes relatives",confirm:"https://www.familytreenow.com",remove:"https://www.familytreenow.com/optout",method:"Find record, opt-out form",diff:"med"},
+  {tier:2,name:"CocoFinder",note:"Free",confirm:"https://cocofinder.com",remove:"https://cocofinder.com/remove-my-info",method:"Web form",diff:"easy"},
+  {tier:2,name:"USA-People-Search",note:"PeopleConnect network",confirm:"https://www.usa-people-search.com",remove:"https://www.usa-people-search.com/manage/optout",method:"Web form",diff:"easy"},
+  {tier:2,name:"PeopleSearchNow",note:"Free",confirm:"https://www.peoplesearchnow.com",remove:"https://www.peoplesearchnow.com/opt-out",method:"Web form",diff:"easy"},
+  {tier:2,name:"Veripages",note:"Radaris network",confirm:"https://veripages.com",remove:"https://radaris.com/control/privacy",method:"Remove via Radaris privacy page",diff:"med"},
+  {tier:2,name:"SpyDialer",note:"Phone/voicemail lookup",confirm:"https://spydialer.com",remove:"https://spydialer.com/optout.aspx",method:"Web form",diff:"easy"},
+  {tier:2,name:"VoterRecords.com",note:"Voter-roll mirror",confirm:"https://voterrecords.com",remove:"https://voterrecords.com/faq",method:"Email opt-out request (see FAQ)",diff:"med"},
+  {tier:2,name:"Rehold",note:"Address/neighbor data",confirm:"https://rehold.com",remove:"https://rehold.com/optout",method:"Web form",diff:"easy"},
+  {tier:2,name:"Homemetry",note:"Address data",confirm:"https://homemetry.com",remove:"https://homemetry.com/-remove",method:"Web form",diff:"easy"},
+
+  {tier:3,name:"TruthFinder",note:"The Background Group",confirm:"https://www.truthfinder.com",remove:"https://www.truthfinder.com/opt-out",method:"Suppression form",diff:"med"},
+  {tier:3,name:"Instant Checkmate",note:"The Background Group",confirm:"https://www.instantcheckmate.com",remove:"https://www.instantcheckmate.com/opt-out",method:"Suppression form",diff:"med"},
+  {tier:3,name:"US Search",note:"PeopleConnect",confirm:"https://www.ussearch.com",remove:"https://www.ussearch.com/opt-out",method:"Web form",diff:"easy"},
+  {tier:3,name:"ZabaSearch",note:"Intelius network",confirm:"https://www.zabasearch.com",remove:"https://www.intelius.com/opt-out",method:"Remove via Intelius",diff:"med"},
+  {tier:3,name:"PeopleLooker",note:"BeenVerified family",confirm:"https://www.peoplelooker.com",remove:"https://www.beenverified.com/app/optout/search",method:"May be covered by BeenVerified opt-out",diff:"med"},
+  {tier:3,name:"PeopleSmart",note:"BeenVerified family",confirm:"https://www.peoplesmart.com",remove:"https://www.beenverified.com/app/optout/search",method:"May be covered by BeenVerified opt-out",diff:"med"},
+  {tier:3,name:"NeighborWho",note:"BeenVerified family",confirm:"https://www.neighborwho.com",remove:"https://www.beenverified.com/app/optout/search",method:"May be covered by BeenVerified opt-out",diff:"med"},
+  {tier:3,name:"Ownerly",note:"BeenVerified family (property)",confirm:"https://www.ownerly.com",remove:"https://www.beenverified.com/app/optout/search",method:"May be covered by BeenVerified opt-out",diff:"med"},
+  {tier:3,name:"PeekYou",note:"Aggregates social profiles",confirm:"https://www.peekyou.com",remove:"https://www.peekyou.com/about/contact/optout",method:"Web form",diff:"easy"},
+  {tier:3,name:"CheckPeople",note:"Subscription",confirm:"https://www.checkpeople.com",remove:"https://www.checkpeople.com/opt-out",method:"Web form",diff:"easy"},
+  {tier:3,name:"PrivateEye",note:"PeopleConnect",confirm:"https://www.privateeye.com",remove:"https://www.privateeye.com/static/view/optout/",method:"Web form",diff:"easy"},
+  {tier:3,name:"PublicRecordsNow",note:"PeopleConnect",confirm:"https://www.publicrecordsnow.com",remove:"https://www.publicrecordsnow.com/optout/",method:"Web form",diff:"easy"},
+  {tier:3,name:"Addresses.com",note:"PeopleConnect",confirm:"https://www.addresses.com",remove:"https://www.addresses.com/optout.php",method:"Web form",diff:"easy"},
+  {tier:3,name:"411.com",note:"Whitepages network",confirm:"https://www.411.com",remove:"https://www.whitepages.com/suppression-requests",method:"Remove via Whitepages",diff:"hard"},
+  {tier:3,name:"AnyWho",note:"Intelius network",confirm:"https://www.anywho.com",remove:"https://www.intelius.com/opt-out",method:"Remove via Intelius",diff:"med"},
+
+  {tier:4,name:"LexisNexis",note:"Major upstream source",confirm:"https://optout.lexisnexis.com",remove:"https://optout.lexisnexis.com",method:"Online form; may ask for ID for full FCRA request",diff:"hard"},
+  {tier:4,name:"Acxiom",note:"Major marketing aggregator",confirm:"https://www.acxiom.com/optout/",remove:"https://isapps.acxiom.com/optout/optout.aspx",method:"Online opt-out form",diff:"med"},
+  {tier:4,name:"Oracle Data Cloud",note:"Ad-targeting data",confirm:"https://datacloudoptout.oracle.com",remove:"https://datacloudoptout.oracle.com",method:"Online opt-out",diff:"easy"},
+  {tier:4,name:"Epsilon",note:"Marketing data",confirm:"https://www.epsilon.com/privacy-policy",remove:"https://legal.epsilon.com/dataprivacy/",method:"Email/online request",diff:"med"},
+  {tier:4,name:"CoreLogic",note:"Property & credit-adjacent data",confirm:"https://www.corelogic.com/privacy",remove:"https://www.corelogic.com/privacy-center/",method:"Consumer request form",diff:"hard"},
+  {tier:4,name:"Data Axle (InfoUSA)",note:"Business/consumer data",confirm:"https://www.data-axle.com",remove:"https://www.data-axle.com/privacy-policy/",method:"Email opt-out request",diff:"med"},
+  {tier:4,name:"DMAchoice",note:"Direct-mail preference",confirm:"https://www.dmachoice.org",remove:"https://www.dmachoice.org",method:"Registration + small fee to suppress mail",diff:"med"},
+
+  {tier:5,name:"GoLookUp",note:"Subscription",confirm:"https://golookup.com",remove:"https://golookup.com/support/optout",method:"Web form",diff:"easy"},
+  {tier:5,name:"BackgroundAlert",note:"Free",confirm:"https://www.backgroundalert.com",remove:"https://www.backgroundalert.com/optout.php",method:"Web form",diff:"easy"},
+  {tier:5,name:"PeopleByName",note:"Free",confirm:"https://www.peoplebyname.com",remove:"https://www.peoplebyname.com/remove.php",method:"Web form",diff:"easy"},
+  {tier:5,name:"Persopo",note:"Subscription",confirm:"https://persopo.com",remove:"https://persopo.com/optout",method:"Web form",diff:"easy"},
+  {tier:5,name:"Clubset",note:"Free",confirm:"https://clubset.com",remove:"https://clubset.com/optout",method:"Web form",diff:"easy"},
+  {tier:5,name:"ArrestFacts",note:"Criminal-record aggregator",confirm:"https://arrestfacts.com",remove:"https://arrestfacts.com/optout",method:"Web form",diff:"med"},
+  {tier:5,name:"Yellowbook / YellowPages People",note:"YellowPages network",confirm:"https://www.yellowbook.com/people/",remove:"https://www.yellowpages.com/about/legal/privacy-policy",method:"Contact via privacy policy",diff:"med"},
+  {tier:5,name:"USSearch mirrors / misc",note:"Long-tail scrapers appear over time",confirm:"",remove:"",method:"Re-scan periodically (Optery free scan is useful here)",diff:"med"},
+];
+
+const TIERS = {
+  1:{label:"Tier 1 · Do first (highest impact)", cls:"tg1"},
+  2:{label:"Tier 2 · Common free people-search", cls:"tg2"},
+  3:{label:"Tier 3 · Subscription broker families", cls:"tg3"},
+  4:{label:"Tier 4 · Upstream data aggregators (source layer)", cls:"tg4"},
+  5:{label:"Tier 5 · Long-tail / additional", cls:"tg5"},
+};
+
+const KEY = "brokerTracker.v1";
+let state = JSON.parse(localStorage.getItem(KEY) || "{}");
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); scheduleAutosave(); }
+
+/* ---------- File sync (File System Access API + fallback) ---------- */
+const FS_SUPPORTED = typeof window.showSaveFilePicker === "function";
+let fileHandle = null;
+let autosaveTimer = null;
+
+function setSyncStatus(msg, ok){
+  const el = document.getElementById("syncStatus");
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = ok ? "var(--easy)" : "var(--muted)";
+}
+
+// Persist the file handle across sessions in IndexedDB.
+const IDB_DB = "brokerTracker", IDB_STORE = "handles", IDB_KEY = "progress";
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open(IDB_DB, 1);
+    r.onupgradeneeded = ()=> r.result.createObjectStore(IDB_STORE);
+    r.onsuccess = ()=> res(r.result);
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function idbSet(v){
+  const db = await idbOpen();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction(IDB_STORE,"readwrite");
+    tx.objectStore(IDB_STORE).put(v, IDB_KEY);
+    tx.oncomplete = res; tx.onerror = ()=> rej(tx.error);
+  });
+}
+async function idbGet(){
+  const db = await idbOpen();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction(IDB_STORE,"readonly");
+    const rq = tx.objectStore(IDB_STORE).get(IDB_KEY);
+    rq.onsuccess = ()=> res(rq.result); rq.onerror = ()=> rej(rq.error);
+  });
+}
+
+async function verifyPermission(handle, write){
+  const opts = { mode: write ? "readwrite" : "read" };
+  if((await handle.queryPermission(opts)) === "granted") return true;
+  if((await handle.requestPermission(opts)) === "granted") return true;
+  return false;
+}
+
+function serialize(){
+  return JSON.stringify({ version:1, savedAt:new Date().toISOString(), state }, null, 2);
+}
+function ingest(text){
+  const data = JSON.parse(text);
+  state = (data && data.state) ? data.state : (data || {});
+  localStorage.setItem(KEY, JSON.stringify(state)); // sync live store without re-triggering autosave
+  render();
+}
+
+async function writeToFile(){
+  if(!fileHandle) return;
+  if(!(await verifyPermission(fileHandle, true))){ setSyncStatus("Permission needed — click Reconnect file", false); return; }
+  const w = await fileHandle.createWritable();
+  await w.write(serialize());
+  await w.close();
+  setSyncStatus(`${fileHandle.name} · saved ${new Date().toLocaleTimeString()}`, true);
+}
+function scheduleAutosave(){
+  if(!fileHandle) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(()=> writeToFile().catch(e=> setSyncStatus("Autosave failed: "+e.message, false)), 600);
+}
+
+async function openFile(){
+  if(!FS_SUPPORTED) return importFallback();
+  try{
+    const [h] = await window.showOpenFilePicker({ types:[{description:"JSON", accept:{"application/json":[".json"]}}] });
+    fileHandle = h;
+    if(!(await verifyPermission(h, true))){ setSyncStatus("Permission denied", false); return; }
+    const file = await h.getFile();
+    ingest(await file.text());
+    await idbSet(h);
+    document.getElementById("fsReconnect").classList.add("hide");
+    setSyncStatus(`${h.name} · connected — changes save automatically`, true);
+  }catch(e){ if(e.name !== "AbortError") setSyncStatus("Open failed: "+e.message, false); }
+}
+
+async function saveFileAs(){
+  if(!FS_SUPPORTED) return exportFallback();
+  try{
+    const h = await window.showSaveFilePicker({ suggestedName:"broker-progress.json", types:[{description:"JSON", accept:{"application/json":[".json"]}}] });
+    fileHandle = h;
+    await writeToFile();
+    await idbSet(h);
+    document.getElementById("fsReconnect").classList.add("hide");
+    setSyncStatus(`${fileHandle.name} · connected — changes save automatically`, true);
+  }catch(e){ if(e.name !== "AbortError") setSyncStatus("Save failed: "+e.message, false); }
+}
+
+async function reconnectFile(){
+  if(!fileHandle) return;
+  if(!(await verifyPermission(fileHandle, true))){ setSyncStatus("Permission denied", false); return; }
+  const file = await fileHandle.getFile();
+  ingest(await file.text());
+  document.getElementById("fsReconnect").classList.add("hide");
+  setSyncStatus(`${fileHandle.name} · connected — changes save automatically`, true);
+}
+
+// Fallbacks for browsers without the File System Access API (Firefox/Safari).
+function exportFallback(){
+  const blob = new Blob([serialize()], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "broker-progress.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  setSyncStatus("Downloaded broker-progress.json — re-import it to restore", false);
+}
+function importFallback(){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "application/json,.json";
+  inp.onchange = ()=>{
+    const f = inp.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = ()=>{ try{ ingest(rd.result); setSyncStatus(`Imported ${f.name}`, true); }catch(e){ setSyncStatus("Import failed: "+e.message, false); } };
+    rd.readAsText(f);
+  };
+  inp.click();
+}
+
+async function initSync(){
+  if(!FS_SUPPORTED){
+    setSyncStatus("This browser can't save directly to a file — buttons export/import a JSON instead. Use Chrome or Edge for auto-sync.", false);
+    return;
+  }
+  try{
+    const h = await idbGet();
+    if(!h){ setSyncStatus("Not connected — progress is saved in this browser only. Connect a file to keep a portable copy.", false); return; }
+    fileHandle = h;
+    if((await h.queryPermission({mode:"readwrite"})) === "granted"){
+      const file = await h.getFile();
+      ingest(await file.text());
+      setSyncStatus(`${h.name} · connected — changes save automatically`, true);
+    } else {
+      document.getElementById("fsReconnect").classList.remove("hide");
+      setSyncStatus(`Remembered "${h.name}" — click Reconnect file to resume auto-sync.`, false);
+    }
+  }catch(e){ setSyncStatus("Could not restore file: "+e.message, false); }
+}
+
+function esc(s){
+  return String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+}
+function diffTag(d){
+  const m={easy:["Easy","d-easy"],med:["Med","d-med"],hard:["Hard","d-hard"]};
+  const [t,c]=m[d]||m.med; return `<span class="diff ${c}">${t}</span>`;
+}
+function linkCell(r){
+  let s="";
+  if(r.confirm) s+=`<a href="${r.confirm}" target="_blank" rel="noopener">Confirm</a>`;
+  if(r.remove){
+    const label = r.remove.startsWith("mailto:") ? "Email" : "Remove ↗";
+    s+=`<a href="${r.remove}" target="_blank" rel="noopener">${label}</a>`;
+  }
+  return `<span class="links">${s||"—"}</span>`;
+}
+
+function render(){
+  const host = document.getElementById("tables");
+  host.innerHTML = "";
+  Object.keys(TIERS).forEach(t=>{
+    const rows = DATA.filter(r=>r.tier==t);
+    if(!rows.length) return;
+    const h2 = document.createElement("h2");
+    h2.innerHTML = `<span class="tier ${TIERS[t].cls}">${TIERS[t].label}</span>`;
+    host.appendChild(h2);
+    const tbl = document.createElement("table");
+    tbl.innerHTML = `<thead><tr><th></th><th>Broker</th><th>Links</th><th>Method</th><th>Difficulty</th><th>Recheck</th><th>Removed profiles / notes</th></tr></thead>`;
+    const tb = document.createElement("tbody");
+    rows.forEach(r=>{
+      const id = r.name;
+      const st = state[id] || {};
+      const tr = document.createElement("tr");
+      tr.dataset.name = r.name.toLowerCase();
+      if(st.done) tr.className="done";
+      tr.innerHTML = `
+        <td class="chk"><input type="checkbox" ${st.done?"checked":""} data-id="${id}"></td>
+        <td class="site"><b>${r.name}</b><small>${r.note||""}</small></td>
+        <td>${linkCell(r)}</td>
+        <td>${r.method}</td>
+        <td>${diffTag(r.diff)}</td>
+        <td class="recheck"><input type="date" data-date="${id}" value="${st.recheck||""}"></td>
+        <td class="notes"><textarea class="profiles" data-notes="${id}" placeholder="Profile URLs removed, dates, confirmation notes…">${esc(st.notes)}</textarea></td>`;
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);
+    host.appendChild(tbl);
+  });
+  bind();
+  updateProgress();
+  applyFilter();
+}
+
+function bind(){
+  document.querySelectorAll('input[type=checkbox][data-id]').forEach(cb=>{
+    cb.onchange = ()=>{
+      const id = cb.dataset.id;
+      state[id] = state[id] || {};
+      state[id].done = cb.checked;
+      if(cb.checked && !state[id].recheck){
+        const d = new Date(); d.setMonth(d.getMonth()+6);
+        state[id].recheck = d.toISOString().slice(0,10);
+      }
+      save(); render();
+    };
+  });
+  document.querySelectorAll('input[type=date][data-date]').forEach(dt=>{
+    dt.onchange = ()=>{
+      const id = dt.dataset.date;
+      state[id] = state[id] || {};
+      state[id].recheck = dt.value;
+      save();
+    };
+  });
+  document.querySelectorAll('textarea.profiles[data-notes]').forEach(ta=>{
+    ta.oninput = ()=>{
+      const id = ta.dataset.notes;
+      state[id] = state[id] || {};
+      state[id].notes = ta.value;
+      save();
+    };
+  });
+}
+
+function updateProgress(){
+  const total = DATA.filter(r=>r.remove).length;
+  const done = DATA.filter(r=>r.remove && state[r.name] && state[r.name].done).length;
+  document.getElementById("fill").style.width = (total? (done/total*100):0)+"%";
+  document.getElementById("ptxt").textContent = `${done} / ${total} removed`;
+}
+
+let todoOnly=false;
+function applyFilter(){
+  const q = document.getElementById("filter").value.trim().toLowerCase();
+  document.querySelectorAll("tbody tr").forEach(tr=>{
+    const hitQ = !q || tr.dataset.name.includes(q);
+    const hitTodo = !todoOnly || !tr.classList.contains("done");
+    tr.classList.toggle("hide", !(hitQ && hitTodo));
+  });
+}
+
+document.getElementById("filter").addEventListener("input", applyFilter);
+document.getElementById("showTodo").onclick = ()=>{ todoOnly=true; applyFilter(); };
+document.getElementById("showAll").onclick = ()=>{ todoOnly=false; applyFilter(); };
+document.getElementById("reset").onclick = ()=>{
+  if(confirm("Clear all checkmarks and recheck dates?")){ state={}; save(); render(); }
+};
+
+document.getElementById("fsOpen").onclick = openFile;
+document.getElementById("fsSaveAs").onclick = saveFileAs;
+document.getElementById("fsReconnect").onclick = reconnectFile;
+
+render();
+initSync();
+</script>
+</body>
+</html>
